@@ -1,10 +1,9 @@
-"use strict";
 // @ts-nocheck
-// to be replaced by real experiments with actual properties
+import "./node_modules/data-layer-helper/dist/data-layer-helper.js";
 const experiments = [
     {
         id: "exp1",
-        start: "event1",
+        start: "event0-already happened",
         stop: "event2",
     },
     {
@@ -40,21 +39,6 @@ const stopExperiments = (shouldStop) => {
         console.log("stopping", exp.id);
     }
 };
-if (!window.dataLayer) {
-    window.dataLayer = [];
-}
-// for nodemon only
-// const dataLayer = [];
-const decorateDataLayer = () => {
-    dataLayer.push = function () {
-        Array.prototype.push.apply(this, arguments);
-        // todo: process only relevant events, not all arguments to push; after being processed the argument should be removed from the datalayer 
-        for (let arg of arguments) {
-            dispatchTriggeringEvent(Object.assign(Object.assign({}, arg), { type: "onDataLayerEvent" }));
-        }
-    };
-};
-decorateDataLayer();
 const dispatchTriggeringEvent = (event) => {
     console.log(event);
     if (event.type === "onDataLayerEvent") {
@@ -63,7 +47,10 @@ const dispatchTriggeringEvent = (event) => {
         stopExperiments(shouldStop);
     }
 };
-dataLayer.push({ name: "event1" }, { name: "event4" }); // multiple events can be pushed
-dataLayer.push({ name: "event2" });
-dataLayer.push({ name: "event3" });
-console.log(dataLayer);
+dataLayer.push({ name: "event0-already happened", type: "onDataLayerEvent" });
+function listener(model, message) {
+    dispatchTriggeringEvent(message);
+}
+// last argument is set to true if we want to listen to past events as well
+const helper = new DataLayerHelper(dataLayer, listener, true);
+dataLayer.push({ name: "event1", type: "onDataLayerEvent" }, { name: "event2", type: "onDataLayerEvent" }); // multiple or single events can be pushed

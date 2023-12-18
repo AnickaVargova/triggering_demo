@@ -1,4 +1,6 @@
 // @ts-nocheck
+import "./node_modules/data-layer-helper/dist/data-layer-helper.js";
+// for more info about this package see https://www.npmjs.com/package/data-layer-helper
 
 interface TriggerEvent {
   type: "onPageLoad" | "onUrlChange" | "onDataLayerEvent";
@@ -11,11 +13,10 @@ interface Experiment {
   stop: string;
 }
 
-// to be replaced by real experiments with actual properties
 const experiments = [
   {
     id: "exp1",
-    start: "event1",
+    start: "event0-already happened",
     stop: "event2",
   },
   {
@@ -34,6 +35,7 @@ const experiments = [
     stop: "event1",
   },
 ];
+
 
 const checkTriggering = (event: TriggerEvent) => {
   const shouldStart = experiments.filter((item) => item.start === event.name);
@@ -55,27 +57,6 @@ const stopExperiments = (shouldStop: Experiment[]) => {
   }
 };
 
-if (!window.dataLayer) {
-  window.dataLayer = [];
-}
-
-// for nodemon only
-// const dataLayer = [];
-
-const decorateDataLayer = () => {
-  dataLayer.push = function () {
-
-    Array.prototype.push.apply(this, arguments);
-
-    // todo: process only relevant events, not all arguments to push; after being processed the argument should be removed from the datalayer 
-    for (let arg of arguments) {
-      dispatchTriggeringEvent({ ...arg, type: "onDataLayerEvent" });
-    }
-  };
-};
-
-decorateDataLayer();
-
 const dispatchTriggeringEvent = (event: TriggerEvent) => {
   console.log(event);
 
@@ -86,8 +67,14 @@ const dispatchTriggeringEvent = (event: TriggerEvent) => {
   }
 };
 
-dataLayer.push({ name: "event1" }, { name: "event4" }); // multiple events can be pushed
-dataLayer.push({ name: "event2" });
-dataLayer.push({ name: "event3" });
+dataLayer.push({ name: "event0-already happened", type: "onDataLayerEvent" })
 
-console.log(dataLayer);
+function listener(model, message) {
+  dispatchTriggeringEvent(message);
+}
+
+// last argument is set to true if we want to listen to past events as well
+const helper = new DataLayerHelper(dataLayer, listener, true);
+
+dataLayer.push({ name: "event1", type: "onDataLayerEvent" }, { name: "event2", type: "onDataLayerEvent" }); // multiple or single events can be pushed
+
