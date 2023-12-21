@@ -1,56 +1,26 @@
 // @ts-nocheck
 import "./node_modules/data-layer-helper/dist/data-layer-helper.js";
-const experiments = [
-    {
-        id: "exp1",
-        start: "event0-already happened",
-        stop: "event2",
-    },
-    {
-        id: "exp2",
-        start: "event1",
-        stop: "event2",
-    },
-    {
-        id: "exp3",
-        start: "event2",
-        stop: "event1",
-    },
-    {
-        id: "exp4",
-        start: "event2",
-        stop: "event1",
-    },
-];
-const checkTriggering = (event) => {
-    const shouldStart = experiments.filter((item) => item.start === event.name);
-    const shouldStop = experiments.filter((item) => item.stop === event.name);
-    return [shouldStart, shouldStop];
-};
-const startExperiments = (shouldStart) => {
-    for (let exp of shouldStart) {
-        // applying experiment
-        console.log("starting", exp.id);
+const publish = (event) => {
+    console.log(event);
+    const data = event === null || event === void 0 ? void 0 : event.eventData;
+    if ((data === null || data === void 0 ? void 0 : data.action) === 'start') {
+        console.log('starting: ', data === null || data === void 0 ? void 0 : data.name);
     }
-};
-const stopExperiments = (shouldStop) => {
-    for (let exp of shouldStop) {
-        //reverting experiment
-        console.log("stopping", exp.id);
+    else if ((data === null || data === void 0 ? void 0 : data.action) === 'stop') {
+        console.log('stopping: ', data === null || data === void 0 ? void 0 : data.name);
     }
 };
 const dispatchTriggeringEvent = (event) => {
-    console.log(event);
-    if (event.type === "onDataLayerEvent") {
-        const [shouldStart, shouldStop] = checkTriggering(event);
-        startExperiments(shouldStart);
-        stopExperiments(shouldStop);
-    }
+    publish(event);
 };
-dataLayer.push({ name: "event0-already happened", type: "onDataLayerEvent" });
+dataLayer.push({ eventData: { name: "exp4", action: "start" } });
 function listener(model, message) {
-    dispatchTriggeringEvent(message);
+    const messageWithType = Object.assign(Object.assign({}, message), { type: 'onDataLayerEvent' });
+    dispatchTriggeringEvent(messageWithType);
 }
 // last argument is set to true if we want to listen to past events as well
 const helper = new DataLayerHelper(dataLayer, listener, true);
-dataLayer.push({ name: "event1", type: "onDataLayerEvent" }, { name: "event2", type: "onDataLayerEvent" }); // multiple or single events can be pushed
+dataLayer.push({ eventData: { name: "exp1", action: "start" } }, { eventData: { name: "exp2", action: "start" } });
+dataLayer.push({ eventData: { name: "exp1", action: "stop" } }, { eventData: { name: "exp3", action: "start" } });
+dataLayer.push({ eventData: { name: "exp2", action: "stop" } }, { eventData: { name: "exp3", action: "stop" } });
+dataLayer.push({ eventData: { name: "exp4", action: "stop" } }); // multiple or single events can be pushed
