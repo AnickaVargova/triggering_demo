@@ -1,6 +1,7 @@
-// @ts-nocheck
-import "./node_modules/data-layer-helper/dist/data-layer-helper.js";
+// import "./node_modules/data-layer-helper/dist/data-layer-helper.js";
 // for more info about this package see https://www.npmjs.com/package/data-layer-helper
+
+import { DataLayerHelper } from "./customHelper.js";
 
 interface TriggerEvent {
   eventType: "onPageLoad" | "onUrlChange" | "onDataLayerEvent";
@@ -10,27 +11,23 @@ interface TriggerEvent {
 const publish = (event: TriggerEvent) => {
   console.log(event);
   const data = event?.eventData;
-  if(data?.action === 'start') {
-    console.log('starting: ', data?.name);
+  if (data?.action === "start") {
+    console.log("starting: ", data?.name);
+  } else if (data?.action === "stop") {
+    console.log("stopping: ", data?.name);
   }
-  else if(data?.action === 'stop') {
-    console.log('stopping: ', data?.name);
-  }
-}
-
-const dispatchTriggeringEvent = (event: TriggerEvent) => {
-  publish(event);
 };
 
-dataLayer.push({ eventData: { name: "exp4", action: "start" } }); 
+const dataLayer = (window as { [key: string]: any })["dataLayer"];
 
-function listener(model, message) {
-  const messageWithType = {...message, type: 'onDataLayerEvent'};
-  dispatchTriggeringEvent(messageWithType);
+dataLayer.push({ eventData: { name: "exp0-past", action: "start" } });
+
+function listener(message: any) {
+  const messageWithType = { ...message, type: "onDataLayerEvent" };
+  publish(messageWithType);
 }
 
-// last argument is set to true if we want to listen to past events as well
-const helper = new DataLayerHelper(dataLayer, listener, true);
+const helper = new DataLayerHelper(dataLayer, { listener, listenToPast: true });
 
 dataLayer.push(
   { eventData: { name: "exp1", action: "start" } },
@@ -44,6 +41,4 @@ dataLayer.push(
   { eventData: { name: "exp2", action: "stop" } },
   { eventData: { name: "exp3", action: "stop" } }
 );
-dataLayer.push({ eventData: { name: "exp4", action: "stop" } }); // multiple or single events can be pushed
-
-
+dataLayer.push({ eventData: { name: "exp4", action: "stop" } });
