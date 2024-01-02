@@ -4,15 +4,15 @@ export class DataLayerHelper {
   private dataLayer_: any[];
   private listener_: Function;
   private listenToPast_: boolean;
-  private hasBeenProcessed_: boolean;
-  private queue: any[];
+  private pastHasBeenProcessed_: boolean;
+  private queue_: any[];
 
   constructor(dataLayer: any[], listener: Function, listenToPast = true) {
     this.dataLayer_ = dataLayer;
     this.listener_ = listener;
     this.listenToPast_ = listenToPast;
-    this.hasBeenProcessed_ = false;
-    this.queue = [];
+    this.pastHasBeenProcessed_ = false;
+    this.queue_ = [];
 
     // Add listener for future state changes.
     const oldPush = this.dataLayer_.push;
@@ -24,7 +24,7 @@ export class DataLayerHelper {
       return result;
     };
 
-    this.process();
+    this.processPast();
   }
 
   /**
@@ -37,19 +37,20 @@ export class DataLayerHelper {
    * the helper.
    * @export
    */
-  process() {
-    if (this.hasBeenProcessed_) {
+  processPast() {
+    if (this.pastHasBeenProcessed_) {
       console.log(
-        "Process has already been run. This method should only run a single time to prepare the helper."
+        "ProcessPast has already been run. This method should only run a single time to prepare the helper."
       );
       return;
     }
 
     // Mark helper as having been processed.
-    this.hasBeenProcessed_ = true;
-    this.dataLayer_.forEach((item) =>
-      this.processStates_([item], !this.listenToPast_)
-    );
+    this.pastHasBeenProcessed_ = true;
+
+    if (!this.listenToPast_) return;
+
+    this.dataLayer_.forEach((item) => this.processStates_([item]));
   }
 
   /**
@@ -62,21 +63,16 @@ export class DataLayerHelper {
    *     listener might not care about.
    * @private
    */
-  processStates_(states: any[], skipListener = false) {
-    if (!this.hasBeenProcessed_) {
+  processStates_(states: any[]) {
+    if (!this.pastHasBeenProcessed_) {
       return;
     }
 
-    this.queue.push.apply(this.queue, states);
+    this.queue_.push.apply(this.queue_, states);
 
-    while (this.queue.length > 0) {
-      const update = this.queue.shift();
-
-      if (!skipListener) {
-        this.listener_(update);
-      }
+    while (this.queue_.length > 0) {
+      const update = this.queue_.shift();
+      this.listener_(update);
     }
   }
 }
-
-(window as { [key: string]: any })["DataLayerHelper"] = DataLayerHelper;

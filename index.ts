@@ -1,6 +1,3 @@
-// import "./node_modules/data-layer-helper/dist/data-layer-helper.js";
-// for more info about this package see https://www.npmjs.com/package/data-layer-helper
-
 import { DataLayerHelper } from "./customHelper.js";
 
 interface TriggerEvent {
