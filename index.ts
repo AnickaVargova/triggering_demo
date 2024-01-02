@@ -27,7 +27,7 @@ function listener(message: any) {
   publish(messageWithType);
 }
 
-const helper = new DataLayerHelper(dataLayer, { listener, listenToPast: true });
+const helper = new DataLayerHelper(dataLayer, listener);
 
 dataLayer.push(
   { eventData: { name: "exp1", action: "start" } },
